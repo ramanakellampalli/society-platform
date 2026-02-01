@@ -1,4 +1,4 @@
-import { IsString, IsInt, IsDecimal, IsBoolean, IsOptional, IsEmail, Min, Length, Matches } from 'class-validator';
+import { IsString, IsInt, IsNumber, IsBoolean, IsOptional, IsEmail, Min, Length, Matches } from 'class-validator';
 import { Type } from 'class-transformer';
 
 export class CreateFlatDto {
@@ -25,8 +25,9 @@ export class CreateFlatDto {
   @Type(() => Number)
   sqFeet?: number;
 
-  @IsDecimal()
+  @IsNumber({ maxDecimalPlaces: 2 })
   @IsOptional()
+  @Min(0)
   @Type(() => Number)
   maintenanceAmount?: number;
 

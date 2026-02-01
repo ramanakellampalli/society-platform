@@ -1,4 +1,4 @@
-import { IsString, IsInt, IsDecimal, IsEnum, IsOptional, Min, Length } from 'class-validator';
+import { IsString, IsInt, IsNumber, IsEnum, IsOptional, Min, Length } from 'class-validator';
 import { BillingCycle } from '@repo/database';
 import { Type } from 'class-transformer';
 
@@ -28,7 +28,8 @@ export class CreateSocietyDto {
   @Type(() => Number)
   totalFlats: number;
 
-  @IsDecimal()
+  @IsNumber({ maxDecimalPlaces: 2 })
+  @Min(0)
   @Type(() => Number)
   maintenanceAmount: number;
 
