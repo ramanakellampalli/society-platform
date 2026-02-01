@@ -1,0 +1,195 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// Phase 1 - Core entities only
+
+model Society {
+  id                String   @id @default(cuid())
+  name              String
+  address           String
+  city              String
+  state             String
+  pincode           String
+  totalFlats        Int
+  maintenanceAmount Decimal  @db.Decimal(10, 2)
+  billingCycle      BillingCycle @default(MONTHLY)
+  
+  flats             Flat[]
+  users             User[]
+  expenses          Expense[]
+  expenseCategories ExpenseCategory[]
+  maintenancePayments MaintenancePayment[]
+  
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+  
+  @@index([city])
+}
+
+model Flat {
+  id                String   @id @default(cuid())
+  society           Society  @relation(fields: [societyId], references: [id], onDelete: Cascade)
+  societyId         String
+  
+  flatNumber        String
+  block             String?
+  floor             Int?
+  sqFeet            Int?
+  
+  maintenanceAmount Decimal? @db.Decimal(10, 2)
+  
+  ownerName         String?
+  ownerPhone        String?
+  ownerEmail        String?
+  
+  isRented          Boolean  @default(false)
+  tenantName        String?
+  tenantPhone       String?
+  
+  maintenancePayments MaintenancePayment[]
+  users             User[]
+  
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+  
+  @@unique([societyId, flatNumber, block])
+  @@index([societyId])
+}
+
+model User {
+  id            String   @id @default(cuid())
+  phone         String   @unique
+  email         String?  @unique
+  name          String
+  role          UserRole
+  
+  society       Society  @relation(fields: [societyId], references: [id], onDelete: Cascade)
+  societyId     String
+  
+  flat          Flat?    @relation(fields: [flatId], references: [id], onDelete: SetNull)
+  flatId        String?
+  
+  passwordHash  String?
+  isActive      Boolean  @default(true)
+  lastLoginAt   DateTime?
+  
+  expensesCreated Expense[] @relation("ExpenseCreator")
+  paymentsRecorded MaintenancePayment[] @relation("PaymentRecorder")
+  
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  
+  @@index([societyId])
+  @@index([role])
+}
+
+model ExpenseCategory {
+  id          String   @id @default(cuid())
+  society     Society  @relation(fields: [societyId], references: [id], onDelete: Cascade)
+  societyId   String
+  
+  name        String
+  description String?
+  budgetAmount Decimal? @db.Decimal(10, 2)
+  color       String?
+  
+  expenses    Expense[]
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  @@unique([societyId, name])
+  @@index([societyId])
+}
+
+model Expense {
+  id          String          @id @default(cuid())
+  society     Society         @relation(fields: [societyId], references: [id], onDelete: Cascade)
+  societyId   String
+  
+  category    ExpenseCategory @relation(fields: [categoryId], references: [id])
+  categoryId  String
+  
+  date        DateTime
+  amount      Decimal         @db.Decimal(10, 2)
+  vendorName  String?
+  description String
+  receiptUrl  String?
+  
+  paymentMode PaymentMode?
+  transactionId String?
+  
+  approvedBy  User            @relation("ExpenseCreator", fields: [approvedById], references: [id])
+  approvedById String
+  
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+  
+  @@index([societyId, date])
+  @@index([categoryId])
+}
+
+model MaintenancePayment {
+  id              String        @id @default(cuid())
+  flat            Flat          @relation(fields: [flatId], references: [id], onDelete: Cascade)
+  flatId          String
+  
+  society         Society       @relation(fields: [societyId], references: [id], onDelete: Cascade)
+  societyId       String
+  
+  month           Int
+  year            Int
+  amount          Decimal       @db.Decimal(10, 2)
+  
+  status          PaymentStatus @default(PENDING)
+  paymentDate     DateTime?
+  paymentMode     PaymentMode?
+  transactionId   String?
+  
+  recordedBy      User?         @relation("PaymentRecorder", fields: [recordedById], references: [id])
+  recordedById    String?
+  
+  notes           String?
+  
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+  
+  @@unique([flatId, month, year])
+  @@index([societyId, status])
+  @@index([flatId])
+}
+
+enum UserRole {
+  ADMIN
+  COMMITTEE
+  TREASURER
+  RESIDENT
+  SECURITY
+}
+
+enum BillingCycle {
+  MONTHLY
+  QUARTERLY
+  ANNUALLY
+}
+
+enum PaymentStatus {
+  PENDING
+  PAID
+  OVERDUE
+  PARTIAL
+}
+
+enum PaymentMode {
+  CASH
+  UPI
+  CHEQUE
+  BANK_TRANSFER
+  ONLINE
+}
