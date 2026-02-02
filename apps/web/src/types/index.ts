@@ -35,6 +35,7 @@ export interface RegisterData {
   password: string;
   societyId: string;
   flatId?: string;
+  role?: string;
 }
 
 // Society types

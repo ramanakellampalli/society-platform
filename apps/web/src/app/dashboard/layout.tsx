@@ -12,6 +12,8 @@ import {
   LogOut,
   Building2,
   Menu,
+  Building,
+  Shield
 } from 'lucide-react';
 import { useState } from 'react';
 
@@ -44,8 +46,14 @@ export default function DashboardLayout({
     { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
     { name: 'Expenses', href: "/dashboard/expenses", icon: Receipt },
     { name: 'Payments', href: '/dashboard/payments', icon: DollarSign },
+    { name: 'Flats', href: '/dashboard/flats', icon: Building },
     { name: 'Reports', href: '/dashboard/reports', icon: TrendingUp },
   ];
+
+  // Admin navigation - only for ADMIN users
+  const adminNavigation = user.role === 'ADMIN' ? [
+    { name: 'Manage Societies', href: '/dashboard/admin/societies', icon: Shield },
+  ] : [];
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -61,6 +69,7 @@ export default function DashboardLayout({
             <span className="text-xl font-bold">Society</span>
           </div>
 
+          {/* Main Navigation */}
           <nav className="space-y-2">
             {navigation.map((item) => (
               <Link
@@ -74,10 +83,34 @@ export default function DashboardLayout({
             ))}
           </nav>
 
+          {/* Admin Panel Section - Only shows for ADMIN users */}
+          {adminNavigation.length > 0 && (
+            <>
+              <div className="mt-6 pt-6 border-t border-gray-200">
+                <p className="px-3 text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">
+                  Admin Panel
+                </p>
+                <nav className="space-y-2">
+                  {adminNavigation.map((item) => (
+                    <Link
+                      key={item.name}
+                      href={item.href}
+                      className="flex items-center gap-3 px-3 py-2 text-blue-700 bg-blue-50 rounded-lg hover:bg-blue-100 transition-colors font-medium"
+                    >
+                      <item.icon className="h-5 w-5" />
+                      <span>{item.name}</span>
+                    </Link>
+                  ))}
+                </nav>
+              </div>
+            </>
+          )}
+
+          {/* User Info & Logout - Fixed at bottom */}
           <div className="absolute bottom-4 left-0 right-0 px-3">
             <div className="bg-gray-100 rounded-lg p-3 mb-3">
               <p className="text-sm font-medium text-gray-900">{user.name}</p>
-              <p className="text-xs text-gray-500">{user.email}</p>
+              <p className="text-xs text-gray-500">{user.email || 'No email'}</p>
               <p className="text-xs text-gray-500 mt-1">
                 Role: <span className="font-medium">{user.role}</span>
               </p>
